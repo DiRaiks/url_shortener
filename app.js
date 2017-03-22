@@ -1,13 +1,29 @@
 var express = require('express');
 var app = express();
+var path = require('path'); //относительный путь
+var mongoose = require('mongoose');
+var base58 = require('./base58');//подключение кодера/декодера
+var Url = require('./Shema');//подключение моедли схемы
 
-app.get('/', function(req,res) {
+//подключение к монго и вывод сообщения
+var db = mongoose.createConnection('mongodb://localhost/url_shortener');
+db.on('error', console.error.bind(console, 'connection error:'));
+db.once('open', function callback() {
+  console.log('connection!')
+});
+
+app.get('/', function(req, res) {
   //маршрут галвной страницы
-  res.send('Hello world');
+  res.sendFile(path.join(__dirname, 'view/index.html'));
 });
 
 app.post('/', function(req,res) {
   //создание и возврат укороченного url
+  longUrl = qqqqqq;
+  //поиск одного совпадения
+Url.findOne({long_url: longUrl}, function(err, item) {
+  console.log(item);
+})
 });
 
 app.get('/', function(req,res) {
@@ -15,5 +31,6 @@ app.get('/', function(req,res) {
 });
 
 var server = app.listen(8080, function() {
-  console.log('Server l on 8080');
+  console.log('Server listen on 8080');
+  console.log(mongoose.version);
 });
