@@ -65,10 +65,19 @@ app.post('/api_short', function(req, res) {
 
 });
 
-app.get('/', function(req, res) {
+app.get('/:encoded_id', function(req, res) {
     //маршрут перенаправления с укороченного
+    var base58ID = req.params.encoded_id;
+    var id = base58.decode(base58ID);
 
-
+    Url.findOne({_id: id}, function(err, item){
+      if(item) {
+        //redirect - перенаправление на long_url
+        res.redirect(item.long_url);
+      } else {
+        console.log('not found');
+      }
+    });
 });
 
 var server = app.listen(8080, function() {
