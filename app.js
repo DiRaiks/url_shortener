@@ -4,6 +4,7 @@ var path = require('path'); //относительный путь
 var bodyParser = require('body-parser'); //промежуточный обработчик json. Преобразовывает данные и передает управление обработчикам
 var mongoose = require('mongoose');
 var base58 = require('./base58.js'); //подключение кодера/декодера
+var config = require('./config');
 var Url = require('./Shema'); //подключение моедли схемы
 var request = require('request');
 
@@ -13,7 +14,7 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: true}));
 
 // подключение к монго и вывод сообщения
-var db = mongoose.createConnection('mongodb://localhost/url_shortener');
+var db = mongoose.createConnection('mongodb://' + config.db.host + '/' + config.db.name);
 db.on('error', console.error.bind(console, 'connection error:'));
 db.once('open', function callback() {
     console.log('connection!')
@@ -28,42 +29,70 @@ app.get('/', function(req, res) {
 app.post('/api_short', function(req, res) {
     //создание и возврат укороченного url
     longUrl = req.body.url;
+    input_short = req.body.input_short;
     shortUrl = '';
-    console.log(longUrl);
 //проверка на валидность url
     request(longUrl, function (error, response, body) {
       if (!error && response.statusCode ==200) {
-        console.log("sucess");
+
         // поиск одного совпадения
         Url.findOne({long_url: longUrl}, function(err, item) {
-            if (item) {
-                shortUrl = 'http://localhost:8080/' + base58.encode(item._id); //берет номер записи из бд и кодирует
-                res.send({'shortUrl': shortUrl}); //отвечает наденным url
-                console.log("kek" + item);
-            } else {
+            if (item) //если длинный url  найден
+             {
+               if(input_short){
+                 res.send({'shortUrl':"url уже в базе: " + config.webhost + item.short_url});
+               } else {
+                res.send({'shortUrl':"url уже в базе: " + config.webhost + item.short_url}); //отвечает найденным url
+              }
+            } else //Длинный url не найден
+             {
+
                 var newUrl = Url;
                 var newUrl = Url({
                     long_url: longUrl,
                     short_url: shortUrl
                 }); //экземпляр для модели
 
+                if (input_short) //если поле с коротким url заполнено
+                {
+                    var col = db.collection("urls");
+                    col.findOne({short_url: input_short}, function(err, word){
+                      if (word) //короткий url найден
+                       {
+                        res.send({'shortUrl': "имя занято"}); //отвечает что имя занято, сохранение не просиходит
+                      } else {
+                        shortUrl = input_short; // присваивает значение из поля короткого url
+                        //сохранение в бд
+                        newUrl.save(function(err) {
+                            if (err) {
+                                console.log(err);
+                            }
+                            var col = db.collection("urls");
+                            col.findOneAndUpdate({long_url: longUrl}, // критерий выборки
+                                {$set: {short_url: shortUrl}} // параметр обновления
+                            );
+                            res.send({'shortUrl': config.webhost + shortUrl}); //отвечает полученным сокращенным url
+                          });
+                      }
+                    });
+
+
+                } else {
+
                 //сохранение в бд
                 newUrl.save(function(err) {
                     if (err) {
                         console.log(err);
                     }
-
-
-                    shortUrl = 'http://localhost:8080/' + base58.encode(newUrl._id); //берет новый номер из бд и кодирует
+                    shortUrl = base58.encode(newUrl._id); //берет новый номер из бд и кодирует
                     var col = db.collection("urls");
-                    col.findOneAndUpdate({
-                            long_url: longUrl
-                        }, // критерий выборки
-                        {$set: {short_url: shortUrl}
-                        } // параметр обновления
+                    col.findOneAndUpdate({long_url: longUrl}, // критерий выборки
+                        {$set: {short_url: shortUrl}} // параметр обновления
                     );
-                    res.send({'shortUrl': shortUrl}); //отвечает полученным сокращенным url
-                });
+                    res.send({'shortUrl': config.webhost + shortUrl}); //отвечает полученным сокращенным url
+                  });
+
+                }
             }
         })
 
@@ -77,8 +106,12 @@ app.post('/api_short', function(req, res) {
 app.get('/:encoded_id', function(req, res) {
     //маршрут перенаправления с укороченного
     var base58ID = req.params.encoded_id;
-    var id = base58.decode(base58ID);
 
+    Url.findOne({short_url: base58ID}, function(err, item){
+    if (item) {
+      res.redirect(item.long_url);
+    } else {
+    var id = base58.decode(base58ID);
     Url.findOne({_id: id}, function(err, item){
       if(item) {
         //redirect - перенаправление на long_url
@@ -87,6 +120,8 @@ app.get('/:encoded_id', function(req, res) {
         console.log('not found');
       }
     });
+  }
+});
 });
 
 var server = app.listen(8080, function() {
