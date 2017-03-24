@@ -1,4 +1,5 @@
 var mongoose = require('mongoose');
+var config = require('./config'); //файл конфигурации
 var db = mongoose.createConnection('mongodb://' + config.db.host + '/' + config.db.name);
 
 //первый счетчик - для удобство поиска по базе и обнавления значения.
