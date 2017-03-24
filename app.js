@@ -132,8 +132,8 @@ app.get('/:encoded_id', function(req, res) {
         }
     });
 });
-
-var server = app.listen(8080, function() {
+var port = process.env.PORT || 8080;
+var server = app.listen(port, function() {
     console.log('Server listen on 8080');
     console.log(mongoose.version);
 });
