@@ -3,11 +3,17 @@
   background-color: red;
 }
 #input_data {
-  padding: 10px;
+  padding: 5px;
+  width: 300px;
+}
+#input_short {
+  padding: 5px;
+  width: 300px;
 }
 body {
   background-color: green;
 }
 .result {
+  padding: 5px;
   width: 300px;
 }
