@@ -1,5 +1,5 @@
 var mongoose = require('mongoose');
-var db = mongoose.createConnection('mongodb://localhost/url_shortener');
+var db = mongoose.createConnection('mongodb://root:123@ds141410.mlab.com:41410/url_shortener');
 
 //первый счетчик - для удобство поиска по базе и обнавления значения.
 var counterSchema = mongoose.Schema({

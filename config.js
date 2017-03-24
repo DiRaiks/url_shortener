@@ -1,9 +1,9 @@
 var config = {};
 
 config.db = {};
-config.webhost = 'http://localhost:8080/';
+config.webhost = 'https://diraiksurlshort.herokuapp.com/';
 
-config.db.host = 'localhost';
+config.db.host = 'root:123@ds141410.mlab.com:41410';
 config.db.name = 'url_shortener';
 
 module.exports = config;
